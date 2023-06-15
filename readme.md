@@ -12,4 +12,4 @@
   - 用户中心模块：注册界面、登录界面、我的Bot界面、每个Bot的详情界面
 - 前后端分离模式
   - `SpringBoot`实现后端
-  - Vue3实现Web端和App端
+  - `Vue3`实现Web端和App端
