@@ -32,5 +32,4 @@ public class BotInfoController {
         map.put(3, "c");
         return map;
     }
-
 }
