@@ -25,11 +25,10 @@ public class BotInfoController {
         return list;
     }
     @RequestMapping("getMap/")
-    public Map<Integer, String> getMap() {
-        Map<Integer, String > map = new HashMap<>();
-        map.put(1, "a");
-        map.put(2, "b");
-        map.put(3, "c");
+    public Map<String , String> getMap() {
+        Map<String, String > map = new HashMap<>();
+        map.put("id", "1");
+        map.put("name", "apple");
         return map;
     }
 }
