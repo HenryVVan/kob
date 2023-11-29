@@ -1,17 +1,30 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
-  <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <img alt="Vue logo" src="./assets/logo.png" />
+  <HelloWorld msg="Welcome to Your Vue.js App" />
+  <div>Bot昵称：{{ bot_name }}</div>
+  <div>Bot战力：{{ bot_rating }}</div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+import HelloWorld from "./components/HelloWorld.vue";
+
+import { ref } from "vue";
 
 export default {
-  name: 'App',
+  name: "App",
+  setup: () => {
+    let bot_name = ref("");
+    let bot_rating = ref("");
+    return {
+      bot_name,
+      bot_rating,
+    };
+  },
+
   components: {
-    HelloWorld
-  }
-}
+    HelloWorld,
+  },
+};
 </script>
 
 <style>
