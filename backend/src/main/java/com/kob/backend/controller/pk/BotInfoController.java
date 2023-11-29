@@ -3,11 +3,29 @@ package com.kob.backend.controller.pk;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.lang.reflect.Array;
 import java.util.*;
 
 @RestController
 @RequestMapping("/pk/")
 public class BotInfoController {
+    @RequestMapping("getInfo/")
+    public Map<String, String> getInfo() {
+        Map<String, String> map = new HashMap<>();
+        map.put("name", "wxy");
+        map.put("rating", "2000");
+        return map;
+    }
+
+    @RequestMapping("getName/")
+    public TreeSet<String> getName() {
+        TreeSet<String> ts = new TreeSet<>();
+        ts.add("wh");
+        ts.add("wh");
+        ts.add("wxy");
+        return ts;
+    }
+
     @RequestMapping("getBotInfo/")
     public List<Map<Integer, String>> getBotInfo() {
         List<Map<Integer, String>> list = new LinkedList<>();
@@ -20,23 +38,6 @@ public class BotInfoController {
         list.add(bot1);
         list.add(bot2);
         return list;
-    }
-
-    @RequestMapping("getInfo/")
-    public Map<String, String> getInfo() {
-        Map<String, String> map = new HashMap<>();
-        map.put("name", "wh");
-        map.put("rating", "1500");
-        return map;
-    }
-
-    @RequestMapping("getName/")
-    public TreeSet<String> getName() {
-        TreeSet<String> ts = new TreeSet<>();
-        ts.add("wh");
-        ts.add("wh");
-        ts.add("wxy");
-        return ts;
     }
 
 }
