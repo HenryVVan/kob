@@ -15,10 +15,9 @@ import java.util.Map;
  * @Filename：InfoServiceImpl
  */
 @RestController
-public class InfoServiceImpl {
+public class InfoController {
     @Autowired
     private InfoService infoService;
-
     @GetMapping("/user/account/info/")
     public Map<String, String> getInfo() {
         return infoService.getInfo();
