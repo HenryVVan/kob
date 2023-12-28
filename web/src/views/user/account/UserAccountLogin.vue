@@ -1,5 +1,6 @@
 <template>
-    <ContentFieldView>
+  <!-- 用一个flag来控制 本地有token时 不展示首页 -->
+    <ContentFieldView v-if="!$store.state.user.pulling_info">
         <!-- grid将整个页面分成12格，这里需要放在中间3格 -->
         <div class="row justify-content-md-center">
             <div class="col-3">
@@ -36,6 +37,25 @@ export default {
     let password = ref("");
     let error_message = ref("");
 
+    const jwt_token = localStorage.getItem("jwt_token");
+    // 登录时判断一下本地缓存中是否有token
+    if (jwt_token) {
+      store.commit("updateToken", jwt_token);
+      store.dispatch("getinfo", {
+        success() {
+          router.push({ name: "home" });
+          store.commit("updatePullingInfo", false);
+        },
+        error() {
+          store.commit("updatePullingInfo", false);
+        }
+      });
+    }
+    // 本地没有jwt token 也要展示登录页面
+    else {
+      store.commit("updatePullingInfo", false);
+    }
+
     const login = () => {
       error_message.value = "";
       store.dispatch("login", {
@@ -45,7 +65,7 @@ export default {
           store.dispatch("getinfo", {
             success() {
               router.push({ name: "home" });
-              console.log(store.state.user);
+              // console.log(store.state.user);
             }
           });
         },

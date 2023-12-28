@@ -8,9 +8,11 @@ export default {
         photo: "",
         token: "",
         is_login: false,
+        pulling_info: true, // 该状态表示当前正在加载信息
     },
     getters: {
     },
+    // 这里的函数要用commit
     mutations: {
         updateUser(state, user) {
             state.id = user.id;
@@ -20,8 +22,19 @@ export default {
         },
         updateToken(state, token) {
             state.token = token;
+        },
+        logout(state) {
+            state.id = "";
+            state.username = "";
+            state.photo = "";
+            state.token = "";
+            state.is_login = false;
+        },
+        updatePullingInfo(state, pulling_info) {
+            state.pulling_info = pulling_info;
         }
     },
+    // 这里的要用dispatch
     actions: {
         login(context, data) {
             $.ajax({
@@ -33,6 +46,8 @@ export default {
                 },
                 success(resp) {
                     if (resp.error_message === "success") {
+                        // 将token存到浏览器的磁盘空间
+                        localStorage.setItem("jwt_token", resp.token);
                         context.commit("updateToken", resp.token);
                         data.success(resp);
                     }
@@ -69,11 +84,11 @@ export default {
             })
         },
         logout(context) {
+            // 退出时，将存到磁盘的token删除
+            localStorage.removeItem("jwt_token");
             context.commit("logout");
-        }
+        },
     },
-
-
     modules: {
     }
 }
