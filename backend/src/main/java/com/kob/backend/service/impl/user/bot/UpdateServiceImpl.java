@@ -3,10 +3,9 @@ package com.kob.backend.service.impl.user.bot;
 import com.kob.backend.mapper.BotMapper;
 import com.kob.backend.pojo.Bot;
 import com.kob.backend.pojo.User;
-import com.kob.backend.service.bot.AddService;
+import com.kob.backend.service.bot.UpdateService;
 import com.kob.backend.service.impl.utils.UserDetailsImpl;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -19,21 +18,20 @@ import java.util.Map;
  * @Author：Henry Wan
  * @Package：com.kob.backend.service.impl.user.bot
  * @Project：backend
- * @Date：2024/1/7 14:58
- * @Filename：AddServiceImpl
+ * @Date：2024/1/8 22:03
+ * @Filename：UpdateServiceImpl
  */
 @Service
-public class AddServiceImpl implements AddService {
-    // 注入数据库接口
+public class UpdateServiceImpl implements UpdateService {
     @Autowired
-    public BotMapper botMapper;
+    private BotMapper botMapper;
+
 
     @Override
-    public Map<String, String> add(Map<String, String> data) {
-        // 获取授权并获取当前登录的用户
-        UsernamePasswordAuthenticationToken authenticationToken =
+    public Map<String, String> update(Map<String, String> data) {
+        UsernamePasswordAuthenticationToken authToken =
                 (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
-        UserDetailsImpl loginUser = (UserDetailsImpl) authenticationToken.getPrincipal();
+        UserDetailsImpl loginUser = (UserDetailsImpl) authToken.getPrincipal();
         User user = loginUser.getUser();
 
         String title = data.get("title");
@@ -66,10 +64,26 @@ public class AddServiceImpl implements AddService {
             return map;
         }
 
-        Date now = new Date();
-        Bot bot = new Bot(null, user.getId(), title, description, content, 1500, now, now);
-        botMapper.insert(bot);
-        map.put("error_message", "success");
+        Bot bot = botMapper.selectById(data.get("bot_id"));
+        if (bot == null) {
+            map.put("error_message", "Bot不存在或为空");
+            return map;
+        }
+        if (!bot.getUserId().equals(user.getId())) {
+            map.put("error_message", "Bot的用户和当前用户不一致");
+            return map;
+        }
+        Bot new_bot = new Bot(
+                bot.getId(),
+                user.getId(),
+                title,
+                description,
+                content,
+                bot.getRating(),
+                bot.getCreatetime(),
+                new Date());
+        botMapper.updateById(new_bot);
+        map.put("error_message", "更新成功");
         return map;
     }
 }
