@@ -55,7 +55,6 @@ export default {
     else {
       store.commit("updatePullingInfo", false);
     }
-
     const login = () => {
       error_message.value = "";
       store.dispatch("login", {
@@ -83,7 +82,7 @@ export default {
   }
 };
 </script>
-<style>
+<style scoped>
 div.error-message {
   color: red;
 }
