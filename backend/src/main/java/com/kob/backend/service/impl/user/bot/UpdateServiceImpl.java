@@ -34,6 +34,8 @@ public class UpdateServiceImpl implements UpdateService {
         UserDetailsImpl loginUser = (UserDetailsImpl) authToken.getPrincipal();
         User user = loginUser.getUser();
 
+        int bot_id = Integer.parseInt(data.get("bot_id"));
+
         String title = data.get("title");
         String description = data.get("description");
         String content = data.get("content");
@@ -64,7 +66,7 @@ public class UpdateServiceImpl implements UpdateService {
             return map;
         }
 
-        Bot bot = botMapper.selectById(data.get("bot_id"));
+        Bot bot = botMapper.selectById(bot_id);
         if (bot == null) {
             map.put("error_message", "Bot不存在或为空");
             return map;
@@ -83,7 +85,8 @@ public class UpdateServiceImpl implements UpdateService {
                 bot.getCreatetime(),
                 new Date());
         botMapper.updateById(new_bot);
-        map.put("error_message", "更新成功");
+        map.put("error_message", "success");
         return map;
     }
 }
+
