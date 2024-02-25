@@ -13,6 +13,7 @@
           <div class="card-header">
           <span style="font-size:120%;">我的Bot</span>
           <!-- Button trigger modal -->
+          <!-- 触发#id -->
           <button type="button" class="btn btn-primary float-end" style="width:10%;" data-bs-toggle="modal" data-bs-target="#add-bot-btn" >创建Bot</button>
 
           <!-- Modal -->
@@ -20,7 +21,7 @@
             <div class="modal-dialog modal-xl">
               <div class="modal-content">
                 <div class="modal-header">
-                  <h1 class="modal-title fs-5" id="exampleModalLabel">创建Bot</h1>
+                  <h1 class="modal-title fs-5">创建Bot</h1>
                   <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -34,7 +35,22 @@
                   </div>
                   <div class="mb-3">
                     <label for="add-bot-code" class="form-label">代码</label>
-                    <textarea v-model="botadd.content" class="form-control" id="add-bot-code" rows="7" placeholder="请输入Bot代码"></textarea>
+                    <VAceEditor
+                              v-model:value="botadd.content"
+                              @init="editorInit"
+                              lang="java"
+                              theme="textmate"
+                              style="height: 300px"
+                              :options="{
+                                enableBasicAutocompletion: true, //启用基本自动完成
+                                enableSnippets: true, // 启用代码段
+                                enableLiveAutocompletion: true, // 启用实时自动完成
+                                fontSize: 14, //设置字号
+                                tabSize: 2, // 标签大小
+                                showPrintMargin: false, //去除编辑器里的竖线
+                                highlightActiveLine: true,
+                              }"
+                            />
                   </div>
                 </div>
 
@@ -62,12 +78,69 @@
                 </tr>
               </thead>
               <tbody>
+                <!-- vue 用变量需要: -->
                 <tr v-for="bot in bots" :key="bot.id">
                 <td>{{bot.title}}</td>
                 <td>{{bot.createtime}}</td>
                 <td>
-                  <button type="button" class="btn btn-secondary" style="width:25%; margin-right:7px;">修改</button>
+                  <!-- 写表达式前面一定要有:, :是v-bind的缩写 -->
+                  <button type="button" class="btn btn-secondary" style="width:25%; margin-right:7px;" data-bs-toggle="modal" :data-bs-target="'#update-bot-btn-' + bot.id" >修改</button>
+                  <!-- 每一个修改按钮对应一个模态窗，所以id要不同 -->
                   <button type="button" class="btn btn-danger" style="width:25%;" @click="remove_bot(bot)">删除</button>
+
+                  <!-- Modal -->
+                  <!-- 写表达式需要用： -->
+                  <div class="modal fade" :id="'update-bot-btn-' + bot.id" tabindex="-1">
+                    <div class="modal-dialog modal-xl">
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h1 class="modal-title fs-5">修改Bot</h1>
+                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                          <div class="mb-3">
+                            <label for="add-bot-title" class="form-label">名称</label>
+                            <input v-model="bot.title"  type="text" class="form-control" id="add-bot-title" placeholder="请输入Bot名称">
+                          </div>
+                          <div class="mb-3">
+                            <label for="add-bot-description" class="form-label">简介</label>
+                            <textarea v-model="bot.description" class="form-control" id="add-bot-description" rows="3" placeholder="请输入Bot简介"></textarea>
+                          </div>
+                          <div class="mb-3">
+                            <label for="add-bot-code" class="form-label">代码</label>
+                            <VAceEditor
+                              v-model:value="bot.content"
+                              @init="editorInit"
+                              lang="java"
+                              theme="textmate"
+                              style="height: 300px"
+                              :options="{
+                                enableBasicAutocompletion: true, //启用基本自动完成
+                                enableSnippets: true, // 启用代码段
+                                enableLiveAutocompletion: true, // 启用实时自动完成
+                                fontSize: 14, //设置字号
+                                tabSize: 2, // 标签大小
+                                showPrintMargin: false, //去除编辑器里的竖线
+                                highlightActiveLine: true,
+                              }"
+                            />
+
+
+                          </div>
+                        </div>
+
+                        <div class="modal-footer">
+                        <!-- 报错信息 -->
+                          <div class="error-message">
+                            {{bot.error_message}} 
+                        </div>
+                          <button type="button" class="btn btn-primary" style="width:10%;" @click="update_bot(bot)"> 保存修改</button>
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" style="width:10%;">取消</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                 </td>
                 </tr>
               </tbody>
@@ -85,10 +158,25 @@ import { ref, reactive } from "vue";
 import $ from "jquery";
 import { useStore } from "vuex";
 import { Modal } from "bootstrap/dist/js/bootstrap";
+import { VAceEditor } from "vue3-ace-editor";
+import ace from "ace-builds";
+
+import "ace-builds/src-noconflict/mode-json";
+import "ace-builds/src-noconflict/theme-chrome";
+import "ace-builds/src-noconflict/ext-language_tools";
+import "ace-builds/src-noconflict/mode-java";
 
 export default {
-  components: {},
+  components: {
+    VAceEditor
+  },
   setup() {
+    ace.config.set(
+      "basePath",
+      "https://cdn.jsdelivr.net/npm/ace-builds@" +
+        require("ace-builds").version +
+        "/src-noconflict/"
+    );
     const store = useStore();
     let bots = ref([]); // ref存变量
     const botadd = reactive({
@@ -164,11 +252,41 @@ export default {
       });
     };
 
+    const update_bot = bot => {
+      // 创建新Bot需要将上次的报错信息清空
+      bot.error_message = "";
+      $.ajax({
+        url: "http://localhost:6221/user/bot/update/",
+        type: "post",
+        data: {
+          // 前端跟后端声明的变量名要一致
+          bot_id: bot.id,
+          title: bot.title,
+          description: bot.description,
+          content: bot.content
+        },
+        headers: {
+          Authorization: "Bearer " + store.state.user.token
+        },
+        success(resp) {
+          if (resp.error_message === "success") {
+            // 成功后需要手动关闭弹窗
+            // console.log("success");
+            Modal.getInstance("#update-bot-btn-" + bot.id).hide();
+            refresh_bots();
+          } else {
+            bot.error_message = resp.error_message;
+          }
+        }
+      });
+    };
+
     return {
       bots,
       botadd,
       add_bot,
-      remove_bot
+      remove_bot,
+      update_bot
     };
   }
 };

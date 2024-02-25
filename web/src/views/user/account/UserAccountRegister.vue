@@ -34,6 +34,26 @@ export default {
     ContentFieldView
   },
   setup() {
+    // const store = useStore();
+    // $.ajax({
+    //   url:"http://localhost:6221/user/bot/add/",
+    //   type:"post",
+    //   data:{
+    //     title:"test",
+    //     description:"描述",
+    //     content:"代码",
+    //   },
+    //   headers:{
+    //     Authorization:"Bearer " + store.store.user.token,
+    //   },
+    //   success(resp){
+    //     console.log(resp);
+    //   },
+    //   error(resp){
+    //     console.log(resp);
+    //   }
+    // })
+
     let username = ref("");
     let password = ref("");
     let confirmedPassword = ref("");
