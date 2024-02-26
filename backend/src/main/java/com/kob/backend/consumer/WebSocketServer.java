@@ -27,11 +27,13 @@ import java.util.concurrent.CopyOnWriteArraySet;
 @Component
 @ServerEndpoint("/websocket/{token}")  // 注意不要以'/'结尾
 public class WebSocketServer {
-    final private static ConcurrentHashMap<Integer, WebSocketServer> userConnectionInfo = new ConcurrentHashMap<>();
+    final public static ConcurrentHashMap<Integer, WebSocketServer> userConnectionInfo = new ConcurrentHashMap<>();
 
     final private static CopyOnWriteArraySet<User> matchPoll = new CopyOnWriteArraySet<>();
     private User user;
     private Session session = null;
+
+    private Game game = null;
 
     // 因为websocket中并非单例模式，所以需要给其定义成static变量
     private static UserMapper userMapper;
@@ -53,7 +55,6 @@ public class WebSocketServer {
         } else {
             this.session.close();
         }
-
     }
 
     @OnClose
@@ -74,28 +75,51 @@ public class WebSocketServer {
             User a = it.next(), b = it.next();
             matchPoll.remove(a);
             matchPoll.remove(b);
-            Game game = new Game(13,14,10);
+            Game game = new Game(13, 14, 10, a.getId(), b.getId());
             game.createMap();
+            // 将服务器端地图放入到用户连接中
+            userConnectionInfo.get(a.getId()).game = game;
+            userConnectionInfo.get(b.getId()).game = game;
+            game.start();
+            // 将与地图相关的信息封装在一起
+            JSONObject respGame = new JSONObject();
+            respGame.put("a_id", game.getPlayerA().getId());
+            respGame.put("a_sx", game.getPlayerA().getSx());
+            respGame.put("a_sy",game.getPlayerA().getSy());
+            respGame.put("b_id", game.getPlayerB().getId());
+            respGame.put("b_sx", game.getPlayerB().getSx());
+            respGame.put("b_sy",game.getPlayerB().getSy());
+            respGame.put("map", game.getG());
 
             JSONObject respA = new JSONObject();
             respA.put("event", "start-matching");
             respA.put("opponent_photo", b.getPhoto());
             respA.put("opponent_username", b.getUsername());
-            respA.put("gamemap", game.getG());
+            respA.put("game", respGame);
             userConnectionInfo.get(a.getId()).sendMessage(respA.toJSONString());
 
             JSONObject respB = new JSONObject();
             respB.put("event", "start-matching");
             respB.put("opponent_photo", a.getPhoto());
             respB.put("opponent_username", a.getUsername());
-            respB.put("gamemap", game.getG());
+            respB.put("game", respGame);
             userConnectionInfo.get(b.getId()).sendMessage(respB.toJSONString());
         }
     }
+
     private void stopMatching() {
         System.out.println("stop matching");
         matchPoll.remove(this.user);
     }
+    private void move(int direction) {
+        if (game.getPlayerA().getId().equals(user.getId())) {
+            game.setNextStepA(direction);
+        }
+        else if (game.getPlayerB().getId().equals(user.getId())) {
+            game.setNextStepB(direction);
+        }
+    }
+
     @OnMessage
     // 这里的message一般会当成路由
     public void onMessage(String message, Session session) {
