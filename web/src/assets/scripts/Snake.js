@@ -79,10 +79,6 @@ export class Snake extends GameObject {
             // 防止引用间互相干扰，使用json转
             this.cells[i] = JSON.parse(JSON.stringify(this.cells[i - 1]));
         }
-        // 下一步操作蛇撞了，蛇应该瞬间去世
-        if (!this.gamemap.check_vaild(this.next_cell)) {
-            this.status = "die";
-        }
     }
 
     update_move() {
