@@ -11,6 +11,7 @@ package com.kob.backend.consumer;
 import com.alibaba.fastjson2.JSONObject;
 import com.kob.backend.consumer.utils.Game;
 import com.kob.backend.consumer.utils.JwtAuthentication;
+import com.kob.backend.mapper.RecordMapper;
 import com.kob.backend.mapper.UserMapper;
 import com.kob.backend.pojo.User;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,12 +39,17 @@ public class WebSocketServer {
     // 因为websocket中并非单例模式，所以需要给其定义成static变量
     private static UserMapper userMapper;
 
+    public static RecordMapper recordMapper;
     @Autowired
     public void setUserMapper(UserMapper userMapper) {
         // 静态变量访问时需要使用类名
         WebSocketServer.userMapper = userMapper;
     }
 
+    @Autowired
+    public void setRecordMapper(RecordMapper recordMapper) {
+        WebSocketServer.recordMapper = recordMapper;
+    }
     @OnOpen
     public void onOpen(Session session, @PathParam("token") String token) throws IOException {
         this.session = session;
@@ -111,25 +117,33 @@ public class WebSocketServer {
         System.out.println("stop matching");
         matchPoll.remove(this.user);
     }
-    private void move(int direction) {
+    private void move(Integer direction) {
         if (game.getPlayerA().getId().equals(user.getId())) {
             game.setNextStepA(direction);
         }
         else if (game.getPlayerB().getId().equals(user.getId())) {
             game.setNextStepB(direction);
         }
+        else {
+            Exception e = new Exception("NoSuchUserError");
+            e.printStackTrace();
+        }
     }
 
     @OnMessage
     // 这里的message一般会当成路由
     public void onMessage(String message, Session session) {
-        System.out.println("receive message");
+        System.out.println("Receive message");
         JSONObject data = JSONObject.parseObject(message);
         String event = data.getString("event");
         if ("start-matching".equals(event)) {
             startMatching();
         } else if ("stop-matching".equals(event)) {
             stopMatching();
+        } else if ("move".equals(event)) {
+            Integer direction = data.getInteger("direction");
+            System.out.println(direction);
+            move(direction);
         }
     }
 

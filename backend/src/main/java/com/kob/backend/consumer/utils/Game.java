@@ -2,10 +2,10 @@ package com.kob.backend.consumer.utils;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.kob.backend.consumer.WebSocketServer;
+import com.kob.backend.pojo.Record;
+import lombok.Data;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -84,9 +84,9 @@ public class Game extends Thread {
             e.printStackTrace();
         }
         // 如果5s内没有玩家输入，返回false
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 100; i++) {
             try {
-                Thread.sleep(1000);
+                Thread.sleep(100);
                 lock.lock();
                 try {
                     if (nextStepA != null && nextStepB != null) {
@@ -156,14 +156,54 @@ public class Game extends Thread {
         }
     }
 
-    // 判断两名玩家下一步操作是否合法
-    private void judge(){
-
+    private boolean checkVaild(List<Cell> lA, List<Cell> lB) {
+        int n = lA.size();
+        int x = lA.get(n - 1).getX(), y = lA.get(n - 1).getY();
+        // 蛇头有无撞墙
+        if (g[x][y] == 1) {
+            return false;
+        }
+        // 有没有与自己撞起来
+        for (int i = 0; i < n - 1; i++) {
+            if (lA.get(i).getX().equals(x) && lA.get(i).getY().equals(y)) {
+                return false;
+            }
+        }
+        // 有没有与对手相撞
+        for (int i = 0; i < n - 1; i++) {
+            if (lB.get(i).getX().equals(x) && lB.get(i).getY().equals(y)) {
+                return false;
+            }
+        }
+        return true;
     }
-    private void sendAllMessage(String message){
+
+    // 判断两名玩家下一步操作是否合法
+    private void judge() {
+        // 先取出两台哦蛇
+        List<Cell> listA = playerA.getCells();
+        List<Cell> listB = playerB.getCells();
+        // 判断两名玩家最后一把是否非法
+        boolean isValidA = checkVaild(listA, listB);
+        boolean isValidB = checkVaild(listB, listA);
+        if (!isValidA || !isValidB) {
+            status = "finished";
+            if (isValidA) {
+                loser = "B";
+            } else if (isValidB) {
+                loser = "A";
+            } else {
+                loser = "all";
+            }
+        }
+    }
+
+
+    private void sendAllMessage(String message) {
         WebSocketServer.userConnectionInfo.get(playerA.getId()).sendMessage(message);
         WebSocketServer.userConnectionInfo.get(playerB.getId()).sendMessage(message);
     }
+
     // 向两名玩家传递移动信息
     private void sendMove() {
         lock.lock();
@@ -171,20 +211,37 @@ public class Game extends Thread {
             JSONObject resp = new JSONObject();
             resp.put("event", "move");
             resp.put("a_direction", nextStepA);
-            resp.put("b_direction",nextStepB);
+            resp.put("b_direction", nextStepB);
+            // 将后端的移动信息返回给前端
+            sendAllMessage(resp.toJSONString());
             // 下一步时需要清空位置
             nextStepA = nextStepB = null;
-            sendAllMessage(resp.toJSONString());
-        }
-        finally {
+        } finally {
             lock.unlock();
         }
     }
+
+    private String getMapString() {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                sb.append(g[i][j]);
+            }
+        }
+        return sb.toString();
+    }
+
+    private void saveToDatabase() {
+        Record record = new Record(null, playerA.getId(), playerA.getSx(), playerA.getSy(), playerB.getId(), playerB.getSx(), playerB.getSy(), playerA.getStepsString(), playerB.getStepsString(), getMapString(), loser, new Date());
+        WebSocketServer.recordMapper.insert(record);
+    }
+
     // 向两名玩家传递游戏结果
-    private void sendResult(String message){
+    private void sendResult() {
         JSONObject resp = new JSONObject();
         resp.put("event", "result");
         resp.put("loser", loser);
+        saveToDatabase();
         sendAllMessage(resp.toJSONString());
     }
 
@@ -197,8 +254,7 @@ public class Game extends Thread {
                 judge();
                 if ("playing".equals(status)) {
                     sendMove();
-                }
-                else {
+                } else {
                     sendResult();
                     break;
                 }
@@ -209,18 +265,16 @@ public class Game extends Thread {
                 try {
                     if (nextStepA == null && nextStepB == null) {
                         this.loser = "all";
-                    }
-                    else if (nextStepA == null) {
+                    } else if (nextStepA == null) {
                         this.loser = "A";
-                    }
-                    else {
+                    } else {
                         this.loser = "B";
                     }
-                }
-                finally {
+                } finally {
                     lock.unlock();
                 }
-
+                sendResult();
+                break;
             }
         }
     }
