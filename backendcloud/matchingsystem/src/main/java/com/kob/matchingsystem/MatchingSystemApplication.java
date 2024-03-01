@@ -12,7 +12,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * @Filename：${NAME}
  */// Press Shift twice to open the Search Everywhere dialog and type `show whitespaces`,
 // then press Enter. You can now see whitespace characters in your code.
-    @SpringBootApplication
+@SpringBootApplication
 public class MatchingSystemApplication {
     public static void main(String[] args) {
         MatchingServiceImpl.matchingPool.start(); // 启动匹配线程

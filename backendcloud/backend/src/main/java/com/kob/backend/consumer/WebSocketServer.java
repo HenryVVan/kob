@@ -12,8 +12,10 @@ import com.alibaba.fastjson2.JSONObject;
 import com.kob.backend.config.RestTemplateConfig;
 import com.kob.backend.consumer.utils.Game;
 import com.kob.backend.consumer.utils.JwtAuthentication;
+import com.kob.backend.mapper.BotMapper;
 import com.kob.backend.mapper.RecordMapper;
 import com.kob.backend.mapper.UserMapper;
+import com.kob.backend.pojo.Bot;
 import com.kob.backend.pojo.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -36,14 +38,16 @@ public class WebSocketServer {
 
     private User user;
     private Session session = null;
-
-    private Game game = null;
+    public Game game = null;
 
     // 因为websocket中并非单例模式，所以需要给其定义成static变量
     private static UserMapper userMapper;
 
     public static RecordMapper recordMapper;
-    private static RestTemplate restTemplate;
+    // 发送请求
+    public static RestTemplate restTemplate;
+
+    private static BotMapper botMapper;
     private final static String addPlayerUrl = "http://127.0.0.1:6222/player/add/";
     private final static String removePlayerUrl = "http://127.0.0.1:6222/player/remove/";
 
@@ -61,6 +65,11 @@ public class WebSocketServer {
     @Autowired
     public void setRestTemplate(RestTemplate restTemplate) {
         WebSocketServer.restTemplate = restTemplate;
+    }
+
+    @Autowired
+    public void setBotMapper(BotMapper botMapper) {
+        WebSocketServer.botMapper = botMapper;
     }
 
     @OnOpen
@@ -84,10 +93,21 @@ public class WebSocketServer {
         }
     }
 
-    public static void startGame(Integer aId, Integer bId) {
+    public static void startGame(Integer aId, Integer aBotId, Integer bId, Integer bBotId) {
         User a = userMapper.selectById(aId);
         User b = userMapper.selectById(bId);
-        Game game = new Game(13, 14, 10, a.getId(), b.getId());
+        Bot botA = botMapper.selectById(aBotId);
+        Bot botB = botMapper.selectById(bBotId);
+
+        // 防止自己匹配自己
+        if (a.equals(b)) return;
+        Game game = new Game(13,
+                14,
+                10,
+                a.getId(),
+                botA,
+                b.getId(),
+                botB);
         game.createMap();
         // 将服务器端地图放入到用户连接中
         if (userConnectionInfo.get(a.getId()) != null)
@@ -123,13 +143,15 @@ public class WebSocketServer {
             userConnectionInfo.get(b.getId()).sendMessage(respB.toJSONString());
     }
 
-    private void startMatching() {
+    private void startMatching(Integer botId) {
         System.out.println("start matching");
         MultiValueMap<String, String> data = new LinkedMultiValueMap<>();
         data.add("userId", this.user.getId().toString());
         data.add("rating", this.user.getRating().toString());
+        data.add("botId", botId.toString());
         // 向Matching System 发请求
         restTemplate.postForObject(addPlayerUrl, data, String.class);
+
     }
 
     private void stopMatching() {
@@ -139,11 +161,14 @@ public class WebSocketServer {
         restTemplate.postForObject(removePlayerUrl, data, String.class);
     }
 
-    private void move(Integer direction) {
+    // move时需要注意，人与bot不能同时操作
+    private void move(Integer direction) { // 将人的操作对应成数值
         if (game.getPlayerA().getId().equals(user.getId())) {
-            game.setNextStepA(direction);
+            if (game.getPlayerA().getBotId().equals(-1)) // 如果是人操作需要屏蔽bot操作
+                game.setNextStepA(direction);
         } else if (game.getPlayerB().getId().equals(user.getId())) {
-            game.setNextStepB(direction);
+            if (game.getPlayerB().getBotId().equals(-1))
+                game.setNextStepB(direction);
         } else {
             Exception e = new Exception("NoSuchUserError");
             e.printStackTrace();
@@ -157,7 +182,7 @@ public class WebSocketServer {
         JSONObject data = JSONObject.parseObject(message);
         String event = data.getString("event");
         if ("start-matching".equals(event)) {
-            startMatching();
+            startMatching(data.getInteger("botId"));
         } else if ("stop-matching".equals(event)) {
             stopMatching();
         } else if ("move".equals(event)) {

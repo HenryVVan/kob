@@ -13,5 +13,6 @@ import java.util.Map;
  * @Filename：Solution
  */
 public class Solution1 {
+    HashMap<Integer, Integer> map = new HashMap<>();
 
 }

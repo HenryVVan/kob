@@ -21,6 +21,8 @@ import java.util.List;
 @NoArgsConstructor
 public class Player {
     private Integer id;
+    private Integer botId; // -1表示未使用bot
+    private String botCode;
     private Integer sx; // 起始x坐标
     private Integer sy; // 其实y坐标
     private List<Integer> steps; // 存储用户每一步移动的方向
@@ -37,6 +39,7 @@ public class Player {
         int x = sx;
         int y = sy;
         int step = 0;
+        cells.add(new Cell(x,y));//添加起点
         for (int d : steps) {
             x += dx[d];
             y += dy[d];
@@ -50,6 +53,7 @@ public class Player {
     }
 
     public String getStepsString() {
+        System.out.println("getStepsString");
         StringBuilder sb = new StringBuilder();
         for (Integer step : steps) {
             sb.append(step).append(",");
