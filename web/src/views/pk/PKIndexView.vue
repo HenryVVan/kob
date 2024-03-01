@@ -21,6 +21,7 @@ export default {
     const socketUrl = `ws://localhost:6221/websocket/${
       store.state.user.token
     }/`;
+    store.commit("updateLoser", null);
     let socket = null;
     onMounted(() => {
       store.commit("updateOpponent", {
@@ -46,7 +47,7 @@ export default {
           // 匹配成功后，延时两秒跳转到对战页面
           setTimeout(() => {
             store.commit("updateStatus", "playing");
-          }, 2000);
+          }, 200);
           store.commit("updateGame", data.game);
         } else if (data.event === "move") {
           console.log(data);
@@ -75,6 +76,7 @@ export default {
 
     onUnmounted(() => {
       socket.close();
+
       store.commit("updateStatus", "matching");
     });
   }

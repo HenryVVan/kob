@@ -1,16 +1,27 @@
 <template>
     <div class="matchground">
         <div class="row">
-            <!-- 一行被分为12份，各占6份 -->
-            <div class="col-6">
-            <div class="user-photo">
-                <img :src="$store.state.user.photo" alt="">
+            <!-- 一行被分为12份 -->
+            <div class="col-4">
+              <div class="user-photo">
+                  <img :src="$store.state.user.photo" alt="">
+              </div>
+              <div class="user-username">
+                  {{$store.state.user.username}}
+              </div>
             </div>
-            <div class="user-username">
-                {{$store.state.user.username}}
+            <div class="col-4">
+              <div class="user-select-bot">
+                <!-- 双向绑定 -->
+                <select v-model="select_bot" class="form-select">
+                  <option value="-1" selected>亲自出马</option>
+                  <option v-for="bot in bots" :key="bot.id" :value="bot.id">
+                    {{bot.title}}
+                  </option>
+                </select>
+              </div>
             </div>
-            </div>
-            <div class="col-6">
+            <div class="col-4">
                 <div class="user-photo">
                 <img :src="$store.state.pk.opponent_photo" alt="">
             </div>
@@ -31,17 +42,22 @@
 <script>
 import { ref } from "vue";
 import { useStore } from "vuex";
+import $ from "jquery";
 
 export default {
   setup() {
     let match_btn_info = ref("开始匹配");
+    let bots = ref([]);
+    let select_bot = ref("-1");
     const store = useStore();
     const click_match_btn = () => {
       if (match_btn_info.value === "开始匹配") {
+        console.log(select_bot.value);
         match_btn_info.value = "取消";
         store.state.pk.socket.send(
           JSON.stringify({
-            event: "start-matching"
+            event: "start-matching",
+            botId: select_bot.value
           })
         );
       } else {
@@ -53,9 +69,30 @@ export default {
         );
       }
     };
+    const refresh_bots = () => {
+      $.ajax({
+        url: "http://localhost:6221/user/bot/query/",
+        type: "get",
+        // 注意这里是headers，一定要有s
+        headers: {
+          Authorization: "Bearer " + store.state.user.token
+        },
+        success(resp) {
+          bots.value = resp;
+        },
+        error(resp) {
+          console.log(resp);
+        }
+      });
+    };
+    // 从云端获取bots
+    refresh_bots();
     return {
       match_btn_info,
-      click_match_btn
+      click_match_btn,
+      refresh_bots,
+      select_bot,
+      bots
     };
   }
 };
@@ -83,5 +120,12 @@ div.user-username {
   font-size: 20px;
   font-weight: 600;
   color: white;
+}
+div.user-select-bot {
+  padding-top: 20vh;
+}
+div.user-select-bot > select {
+  width: 60%;
+  margin: 0 auto;
 }
 </style>
