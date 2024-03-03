@@ -23,15 +23,17 @@ export class GameMap extends GameObject {
             new Snake({ id: 0, color: "#4876EC", r: this.rows - 2, c: 1 }, this),
             new Snake({ id: 1, color: "#F94848", r: 1, c: this.cols - 2 }, this),
         ]
-        // 左下角的蛇初始眼睛朝上
-        this.eye_direction = 0;
-        // 右上角的蛇初始眼睛朝下
-        if (this.id == 1) this.eye_direction = 2;
+
+        // // 左下角的蛇初始眼睛朝上
+        // this.eye_direction = 0;
+        // // 右上角的蛇初始眼睛朝下
+        // if (this.id == 1) this.eye_direction = 2;
 
     }
 
     create_walls() {
         const g = this.store.state.pk.gamemap;
+
         for (let r = 0; r < this.rows; r++) {
             for (let c = 0; c < this.cols; c++) {
                 if (g[r][c]) {
@@ -42,24 +44,71 @@ export class GameMap extends GameObject {
     }
 
     add_listening_events() {
-        // 获取自动聚焦
-        this.ctx.canvas.focus();
-        this.ctx.canvas.addEventListener("keydown", e => {
-            console.log(e.key);
-            let d = -1;
-            if (e.key === 'w') d = 0;
-            else if (e.key === 'd') d = 1;
-            else if (e.key === 's') d = 2;
-            else if (e.key === 'a') d = 3;
-            // 有效输入
-            if (d >= 0) {
-                // 将json转成字符串
-                this.store.state.pk.socket.send(JSON.stringify({
-                    event: "move",
-                    direction: d,
-                }))
-            }
-        });
+        console.log(this.store.state.record);
+        // 如果是播放回放的话
+        if (this.store.state.record.is_record) {
+            const a_steps = this.store.state.record.a_steps.split(',');
+            const b_steps = this.store.state.record.b_steps.split(',');
+
+            // test code
+            // console.log(1111);
+            // console.log(a_steps);
+            // console.log(b_steps);
+            // console.log(1111);
+
+            const loser = this.store.state.record.record_loser;
+            const [snake0, snake1] = this.snakes;
+            let k = 0;
+            const interval_id = setInterval(() => {
+                // 最后一步是蛇死亡，不用复现
+                if (k >= Math.min(a_steps.length - 1, b_steps.length - 1)) {
+                    if (loser === "all" || loser === "A") {
+                        snake0.status = "die";
+                    }
+                    if (loser === "all" || loser === "B") {
+                        snake1.status = "die";
+                    }
+                    clearInterval(interval_id);
+                }
+                else {
+                    // 在这里，我们确保从字符串数组中解析出的每个步骤都是整数
+                    const dirA = parseInt(a_steps[k], 10);
+                    const dirB = parseInt(b_steps[k], 10);
+
+                    // 只有当解析结果是有效数字时，才设置方向
+                    if (!isNaN(dirA)) {
+                        snake0.set_direction(dirA);
+                    }
+                    if (!isNaN(dirB)) {
+                        snake1.set_direction(dirB);
+                    }
+                }
+                k++;
+            }, 300); // 300ms执行一次
+        }
+        else {
+            // 获取自动聚焦
+            this.ctx.canvas.focus();
+
+            this.ctx.canvas.addEventListener("keydown", e => {
+                console.log(e.key);
+                let d = -1;
+                if (e.key === 'w') d = 0;
+                else if (e.key === 'd') d = 1;
+                else if (e.key === 's') d = 2;
+                else if (e.key === 'a') d = 3;
+
+
+                // 有效输入
+                if (d >= 0) {
+                    // 将json转成字符串
+                    this.store.state.pk.socket.send(JSON.stringify({
+                        event: "move",
+                        direction: d,
+                    }))
+                }
+            });
+        }
     }
 
     start() {

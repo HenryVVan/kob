@@ -41,7 +41,7 @@ public class WebSocketServer {
     public Game game = null;
 
     // 因为websocket中并非单例模式，所以需要给其定义成static变量
-    private static UserMapper userMapper;
+    public static UserMapper userMapper;
 
     public static RecordMapper recordMapper;
     // 发送请求

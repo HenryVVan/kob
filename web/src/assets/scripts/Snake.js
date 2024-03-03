@@ -20,6 +20,7 @@ export class Snake extends GameObject {
         this.direction = -1;
         // idle 静止 move 移动 die 已经死亡
         this.status = "idle";
+
         this.dr = [-1, 0, 1, 0]; // 行偏移量
         this.dc = [0, 1, 0, -1]; // 列偏移量
 
@@ -56,7 +57,7 @@ export class Snake extends GameObject {
     // 检测当前回合，蛇的长度是否增加
     check_tail_increasing() {
         if (this.step <= 10) return true;
-        if (this.step % 3 === 0) return true;
+        if (this.step % 3 === 1) return true;
         return false;
     }
 
@@ -66,45 +67,63 @@ export class Snake extends GameObject {
 
     // 将蛇的状态变为走下一步
     next_step() {
+        console.log(6);
         const d = this.direction; // 获取蛇的方向
-        this.next_cell = new Cell(this.cells[0].r + this.dr[d], this.cells[0].c + this.dc[d]);
-        this.eye_direction = d;
-        this.direction = -1;
-        this.status = "move";
-        this.step++;
+        // console.log(d);
+        const nextCell = new Cell(this.cells[0].r + this.dr[d], this.cells[0].c + this.dc[d]);
+        if (this.gamemap.check_vaild(nextCell)) {
+            this.next_cell = nextCell;
+            this.status = "move";
+            this.eye_direction = d;
+            this.direction = -1;
+            // console.log(7);
 
-        const k = this.cells.length;
-        // 头部不变
-        for (let i = k; i > 0; i--) {
-            // 防止引用间互相干扰，使用json转
-            this.cells[i] = JSON.parse(JSON.stringify(this.cells[i - 1]));
+            this.step++;
+            const k = this.cells.length;
+            // 头部不变
+            for (let i = k; i > 0; i--) {
+                // 防止引用间互相干扰，使用json转
+                this.cells[i] = JSON.parse(JSON.stringify(this.cells[i - 1]));
+            }
         }
+        else {
+            this.status = "die";
+        }
+
+        // console.log(8);
     }
 
     update_move() {
+        console.log(1);
         const dx = this.next_cell.x - this.cells[0].x;
         const dy = this.next_cell.y - this.cells[0].y;
         const distance = Math.sqrt(dx * dx + dy * dy);
 
+        // console.log(2);
         // 说明已经重合了
         if (distance < this.eps) {
             this.cells[0] = this.next_cell; // 添加一个新蛇头
             this.next_cell = null;
 
             this.status = "idle"; // 走完了， 停下了
+
+            // console.log(3);
             // 蛇不变长
             if (!this.check_tail_increasing()) {
                 this.cells.pop();
             }
+            // console.log(4);
 
         }
         else {
             const move_distance = this.speed * this.timedelta / 1000;
             this.cells[0].x += move_distance * dx / distance;
             this.cells[0].y += move_distance * dy / distance;
-
+            // console.log(5);
             if (!this.check_tail_increasing()) {
                 const k = this.cells.length;
+                // console.log(k + "xxxx");
+                // console.log(k);
                 const tail = this.cells[k - 1], tail_target = this.cells[k - 2];
                 const tail_dx = tail_target.x - tail.x;
                 const tail_dy = tail_target.y - tail.y;
@@ -116,6 +135,7 @@ export class Snake extends GameObject {
 
     // 每一帧执行一次
     update() {
+        console.log(this.cells); // 打印当前的 cells 信息
         if (this.status === "move") {
             console.log("move");
             this.update_move();
@@ -123,15 +143,23 @@ export class Snake extends GameObject {
         this.render();
     }
     render() {
+        // console.log(1111);
         const L = this.gamemap.L;
         const ctx = this.gamemap.ctx;
 
         // 后渲染的颜色会覆盖前面渲染的颜色
         ctx.fillStyle = this.color;
 
+        // console.log(2222);
         if (this.status === "die") {
             ctx.fillStyle = "white";
         }
+
+        // if (!this.cells || this.cells.length === 0) {
+        //     return; // 如果cells为空，则不进行渲染
+        // }
+
+        // console.log(3333);
 
         for (const cell of this.cells) {
             ctx.beginPath();
@@ -139,6 +167,7 @@ export class Snake extends GameObject {
             ctx.fill();
         }
 
+        // console.log(4444);
         // 美化蛇的身体
         for (let i = 1; i < this.cells.length; i++) {
             const a = this.cells[i - 1], b = this.cells[i];
@@ -154,6 +183,7 @@ export class Snake extends GameObject {
             }
         }
 
+        // console.log(5555);
         ctx.fillStyle = "black";
         for (let i = 0; i < 2; i++) {
             const eye_x = (this.cells[0].x + this.eye_dx[this.eye_direction][i] * 0.15) * L;

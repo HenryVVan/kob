@@ -24,7 +24,7 @@ export class GameObject {
             const obj = GAME_OBJECTS[i];
             if (obj == this) {
                 // 销毁
-                GAME_OBJECTS.splice(i);
+                GAME_OBJECTS.splice(i, 1);
                 break;
             }
         }
