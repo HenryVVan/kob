@@ -8,7 +8,11 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 /**
  * @Author：Henry Wan
@@ -44,8 +48,8 @@ public class Consumer extends Thread {
     }
 
     private String addUid(String code, String uid) {
-        int k = code.indexOf(" implements com.kob.botrunningsystem.utils.BotInterface");
-        System.out.println(k);
+        int k = code.indexOf(" implements Supplier<Integer>");
+//        System.out.println(k);
         return code.substring(0, k) + uid + code.substring(k);
     }
 
@@ -58,14 +62,23 @@ public class Consumer extends Thread {
         }*/
         UUID uuid = UUID.randomUUID();
         String uid = uuid.toString().substring(0, 8);
-        BotInterface botInterface = Reflect.compile(
+        Supplier<Integer> botInterface = Reflect.compile(
                 // 类重名的话，只会编译一次，需要加随机字符串
                 // 每次用户输入 理应重新编译一次
                 "com.kob.botrunningsystem.utils.BotImpl" + uid,
                 addUid(bot.getBotCode(), uid)
 
         ).create().get();
-        Integer direction = botInterface.nextMove(bot.getInput());
+
+        File file = new File("input.txt");
+        try (PrintWriter fout = new PrintWriter(file)) {
+            fout.println(bot.getInput());
+            fout.flush();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        Integer direction = botInterface.get();
         System.out.println("move_direction " + bot.getUserId() + " " + direction);
 
         MultiValueMap<String, String> data = new LinkedMultiValueMap<>();

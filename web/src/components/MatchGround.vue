@@ -71,7 +71,7 @@ export default {
     };
     const refresh_bots = () => {
       $.ajax({
-        url: "http://localhost:6221/user/bot/query/",
+        url: "https://app6617.acapp.acwing.com.cn/api/user/bot/query/",
         type: "get",
         // 注意这里是headers，一定要有s
         headers: {

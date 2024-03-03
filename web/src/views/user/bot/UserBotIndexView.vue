@@ -188,7 +188,7 @@ export default {
 
     const refresh_bots = () => {
       $.ajax({
-        url: "http://localhost:6221/user/bot/query/",
+        url: "https://app6617.acapp.acwing.com.cn/api/user/bot/query/",
         type: "get",
         // 注意这里是headers，一定要有s
         headers: {
@@ -208,7 +208,7 @@ export default {
       // 创建新Bot需要将上次的报错信息清空
       botadd.error_message = "";
       $.ajax({
-        url: "http://localhost:6221/user/bot/add/",
+        url: "https://app6617.acapp.acwing.com.cn/api/user/bot/add/",
         type: "post",
         data: {
           title: botadd.title,
@@ -235,7 +235,7 @@ export default {
 
     const remove_bot = bot => {
       $.ajax({
-        url: "http://localhost:6221/user/bot/remove/",
+        url: "https://app6617.acapp.acwing.com.cn/api/user/bot/remove/",
         type: "post",
         data: {
           bot_id: bot.id
@@ -256,7 +256,7 @@ export default {
       // 创建新Bot需要将上次的报错信息清空
       bot.error_message = "";
       $.ajax({
-        url: "http://localhost:6221/user/bot/update/",
+        url: "https://app6617.acapp.acwing.com.cn/api/user/bot/update/",
         type: "post",
         data: {
           // 前端跟后端声明的变量名要一致

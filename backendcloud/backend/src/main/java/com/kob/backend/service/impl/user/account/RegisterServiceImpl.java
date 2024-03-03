@@ -67,7 +67,7 @@ public class RegisterServiceImpl implements RegisterService {
             return map;
         }
         String passwordEncode = passwordEncoder.encode(password);
-        String photo = "https://img2023.cnblogs.com/blog/3313059/202312/3313059-20231221220557764-16081457.png";
+        String photo = "https://cdn.acwing.com/media/user/profile/photo/228086_lg_8c3431283c.jpg";
 //        因为id是自增的，所以在创建user时可以为空
         User user = new User(null, username, passwordEncode, photo,1500);
         userMapper.insert(user);

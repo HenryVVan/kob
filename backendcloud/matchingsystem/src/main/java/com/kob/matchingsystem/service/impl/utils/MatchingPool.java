@@ -63,7 +63,7 @@ public class MatchingPool extends Thread {
 
     // 将尝试匹配所有玩家
     private void matchPlayers() {
-        System.out.println("match players:" + players.toString());
+//        System.out.println("match players:" + players.toString());
         boolean[] used = new boolean[players.size()];
         int size = players.size();
         for (int i = 0; i < size; i++) {
