@@ -1,3 +1,5 @@
+### [KoB在线对战](https://app6617.acapp.acwing.com.cn/pk/)
+
 **项目设计**
 
 - 名称：`King Of Bots`，简称`kob`
