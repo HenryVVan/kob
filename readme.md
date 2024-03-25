@@ -15,3 +15,5 @@
 - 前后端分离模式
   - `SpringBoot`实现后端
   - `Vue3`实现Web端和App端
+- 项目工作流程
+![](https://raw.githubusercontent.com/HenryVVan/blogImage/main/3313059-20240325112824496-1650112541.png)
